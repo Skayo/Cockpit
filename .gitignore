@@ -1,0 +1,9 @@
+.idea
+flight/**/*.php
+views
+store
+public
+controllers
+config.ini
+translation.json
+my.index.php
