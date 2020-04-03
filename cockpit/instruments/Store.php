@@ -35,8 +35,6 @@ class Store {
 
 	public $collections = [];
 
-	public $fileHandlers = [];
-
 	public function __construct () {
 		$this->storageDir = Flight::get('cockpit.store.path') ?: './store';
 
@@ -45,6 +43,7 @@ class Store {
 
 		$this->autoSave = Flight::get('cockpit.store.auto_save') ?: true;
 		$this->prettify = Flight::get('cockpit.store.prettify') ?: false;
+		$this->useJson = Flight::get('cockpit.store.use_json') ?: false;
 	}
 
 	public function __destruct () {
@@ -70,27 +69,25 @@ class Store {
 	}
 
 	private function load ($collectionName) {
-		$filePath = rtrim($this->storageDir, '/') . "/$collectionName.json";
+		$filePath = rtrim($this->storageDir, '/') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
 
-		$this->fileHandlers[$collectionName] = fopen($filePath, 'cb+');
+		$data = [];
 
-		if (!$this->fileHandlers[$collectionName])
-			throw new Exception("Couldn't open file '$filePath'");
+		if (file_exists($filePath)) {
+			if ($this->useJson) {
+				$rawJSON = file_get_contents($filePath);
 
-		$fileSize = filesize($filePath);
-		$rawJSON = '[]';
+				if ($rawJSON === false)
+					throw new Exception("Couldn't read file '$filePath'");
 
-		if ($fileSize > 0) {
-			$rawJSON = fread($this->fileHandlers[$collectionName], $fileSize);
+				$data = json_decode($rawJSON, true);
 
-			if (!$rawJSON)
-				throw new Exception("Couldn't read file '$filePath'");
+				if (json_last_error() !== JSON_ERROR_NONE)
+					throw new Exception("Error while parsing JSON of collection '$collectionName': " . json_last_error_msg());
+			} else {
+				$data = require $filePath;
+			}
 		}
-
-		$data = json_decode($rawJSON, true);
-
-		if (json_last_error() !== JSON_ERROR_NONE)
-			throw new Exception("Error while parsing JSON of collection '$collectionName': " . json_last_error_msg());
 
 		return $data;
 	}
@@ -99,26 +96,21 @@ class Store {
 		foreach ($this->collections as $collectionName => $collection) {
 			$collectionData = $collection->getData();
 
-			$filePath = rtrim($this->storageDir, '/') . "/$collectionName.json";
+			$filePath = rtrim($this->storageDir, '/') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
 
-			$rawJSON = json_encode($collectionData, $this->prettify ? JSON_PRETTY_PRINT : 0);
+			if (file_exists($filePath) && !is_writable($filePath))
+				throw new Exception("'$filePath' is not writable");
 
-			if (json_last_error() !== JSON_ERROR_NONE)
-				throw new Exception("Error while JSON-encoding data of collection '$collectionName': " . json_last_error_msg());
+			if ($this->useJson) {
+				$newData = json_encode($collectionData, $this->prettify ? JSON_PRETTY_PRINT : 0);
 
-			if (!is_writable($filePath) && file_exists($filePath))
-				throw new Exception("File '$filePath' not writable");
+				if (json_last_error() !== JSON_ERROR_NONE)
+					throw new Exception("Error while JSON-encoding data of collection '$collectionName': " . json_last_error_msg());
+			} else {
+				$newData = "<?php\nreturn " . var_export($collectionData, true) . ';';
+			}
 
-			if (!ftruncate($this->fileHandlers[$collectionName], 1))
-				throw new Exception("Couldn't truncate file '$filePath'");
-
-			if (!rewind($this->fileHandlers[$collectionName]))
-				throw new Exception("Couldn't rewind file '$filePath'");
-
-			if (!fwrite($this->fileHandlers[$collectionName], $rawJSON))
-				throw new Exception("Couldn't write file '$filePath'");
-
-			fclose($this->fileHandlers[$collectionName]);
+			file_put_contents($filePath, $newData);
 		}
 	}
 }
