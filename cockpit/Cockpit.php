@@ -1,5 +1,6 @@
 <?php
 
+
 class Cockpit {
 
 	private static $availableInstruments = [
@@ -10,6 +11,7 @@ class Cockpit {
 		'store'    => 'Store',
 		'db'       => 'DB',
 		'markdown' => 'Markdown',
+		'utils'    => 'Utils',
 	];
 
 	public static $configFile = 'config.ini';
@@ -17,9 +19,6 @@ class Cockpit {
 	private static $initialized = false;
 
 	public static function init () {
-		// Add instruments path
-		Flight::path('cockpit/instruments');
-
 		// Load config
 		$config = parse_ini_file(self::$configFile, true, INI_SCANNER_TYPED);
 
@@ -50,10 +49,17 @@ class Cockpit {
 		}
 
 		foreach ($instruments as $instrument) {
+			$instrument = strtolower($instrument);
+
 			if (!isset(self::$availableInstruments[$instrument]))
 				throw new Exception("No cockpit instrument named '$instrument' found!");
 
-			Flight::register($instrument, self::$availableInstruments[$instrument]);
+			require './cockpit/instruments/' . self::$availableInstruments[$instrument] . '.php';
+
+			if ($instrument === 'utils')
+				Utils::init();
+			else
+				Flight::register($instrument, self::$availableInstruments[$instrument]);
 		}
 	}
 
