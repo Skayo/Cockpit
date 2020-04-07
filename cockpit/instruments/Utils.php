@@ -3,28 +3,7 @@
 
 class Utils {
 	public static function init () {
-		Flight::map('layout', 'Utils::layout');
-		Flight::map('section', 'Utils::section');
 		Flight::map('console', 'Utils::console');
-	}
-
-	public static function layout ($file, $checkVar = 'content') {
-		Flight::before('stop', function () use ($file, $checkVar) {
-			if (Flight::view()->has($checkVar))
-				Flight::render($file);
-		});
-	}
-
-	private static $currSectionName;
-
-	public static function section ($name = null) {
-		if (is_null($name) && !is_null(self::$currSectionName)) {
-			Flight::view()->set(self::$currSectionName, ob_get_clean());
-			self::$currSectionName = null;
-		} else if (!is_null($name)) {
-			self::$currSectionName = $name;
-			ob_start();
-		}
 	}
 
 	public static function console () {

@@ -5,7 +5,7 @@
  * https://medoo.in
  * Version 1.7.10
  *
- * Copyright 2020, Angel Lai
+ * Copyright (C), Angel Lai
  * Released under the MIT license
  */
 

@@ -5,7 +5,7 @@
  * http://parsedown.org
  * Version 1.7.4
  *
- * Copyright 2020, Emanuil Rusev
+ * Copyright (C), Emanuil Rusev
  * Released under the MIT license
  */
 

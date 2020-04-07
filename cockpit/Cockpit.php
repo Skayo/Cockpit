@@ -11,8 +11,11 @@ class Cockpit {
 		'store'    => 'Store',
 		'db'       => 'DB',
 		'markdown' => 'Markdown',
+		'view'     => 'View',
 		'utils'    => 'Utils',
 	];
+
+	private static $usedInstruments = [];
 
 	public static $configFile = 'config.ini';
 
@@ -51,15 +54,31 @@ class Cockpit {
 		foreach ($instruments as $instrument) {
 			$instrument = strtolower($instrument);
 
+			if (in_array($instrument, self::$usedInstruments))
+				continue;
+
 			if (!isset(self::$availableInstruments[$instrument]))
 				throw new Exception("No cockpit instrument named '$instrument' found!");
 
 			require './cockpit/instruments/' . self::$availableInstruments[$instrument] . '.php';
 
-			if ($instrument === 'utils')
-				Utils::init();
-			else
-				Flight::register($instrument, self::$availableInstruments[$instrument]);
+			switch ($instrument) {
+				case 'utils':
+					Utils::init();
+					break;
+
+				case 'view':
+					Flight::register('view', 'View');
+					Flight::map('render', function ($template, $data = null) {
+						Flight::view()->render($template, $data);
+					});
+					break;
+
+				default:
+					Flight::register($instrument, self::$availableInstruments[$instrument]);
+			}
+
+			self::$usedInstruments[] = $instrument;
 		}
 	}
 

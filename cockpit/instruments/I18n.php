@@ -1,7 +1,12 @@
 <?php
 
-// Modified copy from https://github.com/Mika-/i18next-php
-// -> Supports basic i18next functionality
+/*!
+ * Modified Copy of i18next-php
+ * https://github.com/Mika-/i18next-php
+ *
+ * Copyright (C), Mika-
+ * Released under the BEER-WARE license
+ */
 
 class I18n {
 	private static $path = null;
