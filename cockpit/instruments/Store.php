@@ -109,10 +109,36 @@ class Store {
 				if (json_last_error() !== JSON_ERROR_NONE)
 					throw new Exception("Error while JSON-encoding data of collection '$collectionName': " . json_last_error_msg());
 			} else {
-				$newData = "<?php\nreturn " . var_export($collectionData, true) . ';';
+				$newData = "<?php\nreturn " . $this->varExport($collectionData, $this->prettify) . ';';
 			}
 
 			file_put_contents($filePath, $newData);
+		}
+	}
+
+	private function varExport($var, $prettify = false, $level = 0) {
+		if (is_array($var)) {
+			$keyValuePairs = [];
+
+			foreach ($var as $key => $value) {
+				$keyValue = '';
+				$keyValue .= var_export($key, true);
+				$keyValue .= $prettify ? ' => ' : '=>';
+				$keyValue .= $this->varExport($value, $prettify, $level + 1);
+				$keyValuePairs[] = $keyValue;
+			}
+
+			$indent = str_repeat('    ', $level);
+			$nextIndent = str_repeat('    ', $level + 1);
+
+			$code = $prettify ? "[\n" : '[';
+			$code .= $prettify ? $nextIndent : '';
+			$code .= implode($prettify ? ",\n{$nextIndent}" : ',', $keyValuePairs);
+			$code .= $prettify ? "\n{$indent}]" : ']';
+
+			return $code;
+		} else {
+			return var_export($var, true);
 		}
 	}
 }
