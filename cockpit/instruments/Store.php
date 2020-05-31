@@ -36,10 +36,12 @@ class Store {
 	public $collections = [];
 
 	public function __construct () {
-		$this->storageDir = Flight::get('cockpit.store.path') ?: './store';
+		$storageDir = Flight::get('cockpit.store.path') ?: './store';
 
-		if (!is_dir($this->storageDir))
-			throw new Exception("Storage dir '$this->storageDir' isn't a directory!");
+		if (!realpath($storageDir) || !is_dir(realpath($storageDir)))
+			throw new Exception("Storage dir '$storageDir' isn't a directory or doesn't exist!");
+
+		$this->storageDir = realpath($storageDir);
 
 		$this->autoSave = Flight::get('cockpit.store.auto_save') ?: true;
 		$this->prettify = Flight::get('cockpit.store.prettify') ?: false;
@@ -64,12 +66,12 @@ class Store {
 		return $collection;
 	}
 
-	public function get ($collectionName) {
+	public function in ($collectionName) {
 		$this->__get($collectionName);
 	}
 
 	private function load ($collectionName) {
-		$filePath = rtrim($this->storageDir, '/') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
+		$filePath = rtrim($this->storageDir, '/\\') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
 
 		$data = [];
 
@@ -96,7 +98,7 @@ class Store {
 		foreach ($this->collections as $collectionName => $collection) {
 			$collectionData = $collection->getData();
 
-			$filePath = rtrim($this->storageDir, '/') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
+			$filePath = rtrim($this->storageDir, '/\\') . "/$collectionName." . ($this->useJson ? 'json' : 'php');
 
 			if (file_exists($filePath) && !is_writable($filePath))
 				throw new Exception("'$filePath' is not writable");

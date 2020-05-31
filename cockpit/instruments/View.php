@@ -8,6 +8,7 @@
  * Released under the MIT license
  */
 
+
 class View {
 	public $path;
 
@@ -32,6 +33,9 @@ class View {
 		$this->path = Flight::get('cockpit.views.path') ?: './views';
 		$this->componentsPath = Flight::get('cockpit.views.components_path') ?: './views/components';
 		$this->extension = Flight::get('cockpit.views.extension') ?: '.php';
+
+		$this->addFunction('e', [$this, 'e']);
+		$this->addFunction('escape', [$this, 'e']);
 	}
 
 	public function get ($key) {
@@ -193,6 +197,8 @@ class View {
 		foreach (explode('|', $functions) as $function) {
 			if (is_callable($function)) {
 				$value = $function($value);
+			} else if (isset($this->functions[$function])) {
+				$value = $this->$function($value);
 			} else {
 				throw new Exception("The function used in a batch call could not be found: $function");
 			}
