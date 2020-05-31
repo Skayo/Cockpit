@@ -32,6 +32,8 @@ class Store {
 	private $autoSave = true;
 
 	private $prettify = false;
+	
+	private $useJson = false;
 
 	public $collections = [];
 
